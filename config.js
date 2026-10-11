@@ -7,11 +7,11 @@ self.PUSH_CONFIG = {
   APP_NAME: "VOY 알림",
 
   // Supabase 대시보드 > Project Settings > API
-  SUPABASE_URL: "https://YOUR-PROJECT.supabase.co",
-  SUPABASE_ANON_KEY: "YOUR-ANON-OR-PUBLISHABLE-KEY",
+  SUPABASE_URL: "https://iloybfyzbjslcvtpvctv.supabase.co",
+  SUPABASE_ANON_KEY: "sb_publishable_UWOW8stjS7zwEzrNMdIphA_G1fuZssA",
 
   // setup.html 에서 만든 "공개키(Public Key)" — 개인키는 절대 여기에 넣지 마세요
-  VAPID_PUBLIC_KEY: "YOUR-VAPID-PUBLIC-KEY",
+  VAPID_PUBLIC_KEY: "BHpnmKBCEPCr9YehzeluvE_1Igh_GXnwnLt32dXpwHe62KxHzFv76GCnuRQVsIUGhLlpSgJmmRotUXKCGUR42jM",
 
   // 구독자가 고를 수 있는 그룹 (비워두면 [] → 그룹 선택칸이 숨겨짐)
   GROUPS: ["1팀", "2팀", "3팀", "4팀", "5팀", "본사"],
