@@ -4,7 +4,7 @@
 // =====================================================================
 self.PUSH_CONFIG = {
   // 잠금화면 알림에 표시되는 앱 이름은 manifest.json 의 "name" 도 같이 바꿔주세요
-  APP_NAME: "VOY 알림",
+ APP_NAME: "YH Push",APP_NAME: "YH Push",
 
   // Supabase 대시보드 > Project Settings > API
   SUPABASE_URL: "https://iloybfyzbjslcvtpvctv.supabase.co",
