@@ -5,7 +5,7 @@
 importScripts("config.js");
 const CFG = self.PUSH_CONFIG || {};
 const FN_URL = (CFG.SUPABASE_URL || "") + "/functions/v1/push";
-const SW_VERSION = "1.0.0";
+const SW_VERSION = "1.1.0";
 
 self.addEventListener("install", () => self.skipWaiting());
 self.addEventListener("activate", (e) => e.waitUntil(self.clients.claim()));
@@ -61,7 +61,11 @@ self.addEventListener("pushsubscriptionchange", (event) => {
     await fetch(FN_URL, {
       method: "POST",
       headers: { "Content-Type": "application/json", apikey: CFG.SUPABASE_ANON_KEY, Authorization: "Bearer " + CFG.SUPABASE_ANON_KEY },
-      body: JSON.stringify({ action: "subscribe", subscription: sub.toJSON() }),
+      body: JSON.stringify({
+        action: "subscribe",
+        subscription: sub.toJSON(),
+        old_endpoint: event.oldSubscription ? event.oldSubscription.endpoint : "",
+      }),
     });
   })());
 });

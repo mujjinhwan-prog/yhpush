@@ -1,0 +1,8 @@
+vapid_public_key
+BHpnmKBCEPCr9YehzeluvE_1Igh_GXnwnLt32dXpwHe62KxHzFv76GCnuRQVsIUGhLlpSgJmmRotUXKCGUR42jM
+
+vapid_privete_key
+glnmWzQgBldzRPLJjh8BPA-AvB-Lh452tctDsu0cgws
+
+admin_key
+L3RX3H8VLB1ys7iH7zYFnj90

@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>VOY 알림</title>
+<title>YH Push</title>
 <meta name="theme-color" content="#0f1b2d">
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="icons/icon-192.png">
@@ -11,7 +11,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="VOY 알림">
+<meta name="apple-mobile-web-app-title" content="YH Push">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
 <script src="config.js"></script>
 <style>
@@ -55,6 +55,31 @@
   .toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom));transform:translateX(-50%) translateY(20px);background:#fff;color:#111;font-size:14px;font-weight:600;padding:12px 18px;border-radius:12px;opacity:0;transition:.25s;pointer-events:none;max-width:90vw;text-align:center}
   .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
   .hide{display:none!important}
+  .req{color:var(--bad)}
+  .err{color:var(--bad);font-size:13px;min-height:0;margin:-4px 0 10px}
+  .err:empty{display:none}
+  input.bad{border-color:var(--bad)}
+  .me{display:flex;align-items:center;gap:12px;background:rgba(0,0,0,.2);border-radius:12px;padding:12px 14px;margin-bottom:14px}
+  .me .av{width:40px;height:40px;border-radius:50%;background:rgba(78,161,255,.2);color:var(--accent);display:grid;place-items:center;font-weight:700}
+  .me b{display:block;font-size:15px}.me span{font-size:13px;color:var(--muted)}
+  .ask{margin:4px 0 14px}
+  .ask-q{font-size:15px;font-weight:700;margin-bottom:10px}
+  .yn{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .yn button{font:inherit;font-size:15px;font-weight:600;color:var(--text);background:rgba(0,0,0,.25);border:1.5px solid var(--line);border-radius:14px;padding:14px 8px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px;transition:.15s}
+  .yn .yn-i{font-size:22px;line-height:1}
+  .yn button.sel[data-v="y"]{border-color:var(--accent);background:rgba(78,161,255,.16);color:#fff}
+  .yn button.sel[data-v="n"]{border-color:var(--muted);background:rgba(255,255,255,.08)}
+  .yn button:not(.sel){opacity:.85}
+  .sw-row{display:flex;align-items:center;justify-content:space-between;background:rgba(0,0,0,.2);border-radius:12px;padding:14px 16px;margin-bottom:12px}
+  .sw-row b{display:block;font-size:15px}.sw-row span{font-size:13px;color:var(--muted)}
+  .switch{position:relative;width:52px;height:32px;border-radius:999px;border:0;background:rgba(255,255,255,.2);cursor:pointer;transition:.2s;flex:0 0 52px}
+  .switch::after{content:"";position:absolute;top:3px;left:3px;width:26px;height:26px;border-radius:50%;background:#fff;transition:.2s;box-shadow:0 1px 3px rgba(0,0,0,.3)}
+  .switch.on{background:var(--ok)}
+  .switch.on::after{left:23px}
+  .confirm{background:rgba(255,107,107,.1);border:1px solid rgba(255,107,107,.35);border-radius:12px;padding:12px 14px;margin-bottom:12px}
+  .confirm p{margin:0 0 10px;color:var(--text)}
+  .btn.warnbtn{background:var(--bad);color:#fff}
+  .row+.row{margin-top:8px}
   .foot{text-align:center;color:var(--muted);font-size:12px;margin-top:20px}
 </style>
 </head>
@@ -62,7 +87,7 @@
 <div class="wrap">
   <div class="brand">
     <img src="icons/icon-192.png" alt="">
-    <div><h1 id="appName">VOY 알림</h1><p>중요한 공지를 휴대폰 알림으로 받아보세요</p></div>
+    <div><h1 id="appName">YH Push</h1><p>중요한 공지를 휴대폰 알림으로 받아보세요</p></div>
   </div>
 
   <!-- 카카오톡 등 인앱 브라우저 -->
@@ -81,7 +106,7 @@
     <ol class="steps">
       <li><span>Safari 하단의 <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12M7 8l5-5 5 5M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6"/></svg></span> <b>공유</b> 버튼을 누르세요</span></li>
       <li><span>목록에서 <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="M12 8v8M8 12h8"/></svg></span> <b>홈 화면에 추가</b>를 선택하세요</span></li>
-      <li><span>홈 화면에 생긴 <b id="appName2">VOY 알림</b> 아이콘으로 다시 열어주세요</span></li>
+      <li><span>홈 화면에 생긴 <b id="appName2">YH Push</b> 아이콘으로 다시 열어주세요</span></li>
     </ol>
   </section>
 
@@ -94,27 +119,59 @@
 
   <!-- 구독 신청 -->
   <section class="card hide" id="vSubscribe">
-    <span class="status"><span class="dot"></span>알림 꺼짐</span>
-    <h2>알림 받기</h2>
-    <p>버튼을 누르고 <b>허용</b>을 선택하면 설정이 끝나요.</p>
-    <label for="inName">이름 (선택)</label>
+    <span class="status" id="subStatus"><span class="dot"></span>알림 꺼짐</span>
+    <h2 id="subTitle">알림 받기</h2>
+    <p id="subDesc">이름과 사번을 입력하고 버튼을 누른 뒤 <b>허용</b>을 선택하면 설정이 끝나요.</p>
+    <label for="inName">이름 <span class="req">*</span></label>
     <input id="inName" maxlength="40" placeholder="예: 홍길동" autocomplete="name">
+    <label for="inEmp">사번 <span class="req">*</span></label>
+    <input id="inEmp" maxlength="20" placeholder="예: 2021001" autocomplete="off" autocapitalize="characters" inputmode="text">
     <div id="grpWrap">
-      <label for="inGrp">소속 (선택)</label>
+      <label for="inGrp">소속</label>
       <select id="inGrp"><option value="">선택 안 함</option></select>
     </div>
-    <button class="btn" id="btnSub">🔔 알림 받기</button>
+    <div class="ask">
+      <div class="ask-q">알림을 받으시겠습니까? <span class="req">*</span></div>
+      <div class="yn" id="yn">
+        <button type="button" data-v="y"><span class="yn-i">🔔</span>예, 받을게요</button>
+        <button type="button" data-v="n"><span class="yn-i">🔕</span>아니요</button>
+      </div>
+    </div>
+    <div class="err" id="formErr"></div>
+    <button class="btn" id="btnSub" disabled>선택해주세요</button>
+    <button class="btn danger hide" id="btnCancelEdit" style="margin-top:6px;color:var(--muted)">취소</button>
   </section>
 
   <!-- 구독 완료 -->
   <section class="card hide" id="vSubscribed">
     <span class="status on"><span class="dot"></span>알림 받는 중</span>
     <h2>설정이 완료되었어요</h2>
-    <p id="subInfo">새 공지가 올라오면 잠금화면에 알림이 표시됩니다.</p>
+    <div class="me"><div class="av" id="meAv">?</div><div><b id="meName"></b><span id="meSub"></span></div></div>
+    <p>새 공지가 올라오면 잠금화면에 알림이 표시됩니다.</p>
+    <div class="sw-row">
+      <div><b>알림 받기</b><span id="swState">켜짐</span></div>
+      <button class="switch on" id="swNotify" role="switch" aria-checked="true" aria-label="알림 받기"></button>
+    </div>
+    <div class="confirm hide" id="offConfirm">
+      <p>알림을 끄시겠습니까? 끄면 공지 알림이 오지 않아요.</p>
+      <div class="row"><button class="btn ghost" id="btnOffNo">취소</button><button class="btn warnbtn" id="btnOffYes">끄기</button></div>
+    </div>
     <div class="row">
       <button class="btn ghost" id="btnTest">테스트 알림 받기</button>
+      <button class="btn ghost" id="btnEdit">내 정보 수정</button>
     </div>
-    <button class="btn danger" id="btnUnsub" style="margin-top:8px">알림 끄기</button>
+  </section>
+
+  <!-- 알림 받지 않음 -->
+  <section class="card hide" id="vOff">
+    <span class="status off"><span class="dot"></span>알림 받지 않음</span>
+    <h2>알림을 받지 않도록 설정했어요</h2>
+    <div class="me hide" id="offMe"><div class="av" id="offAv">?</div><div><b id="offName"></b><span id="offSub"></span></div></div>
+    <p>마음이 바뀌면 언제든 아래 스위치를 켜서 다시 받을 수 있어요.</p>
+    <div class="sw-row">
+      <div><b>알림 받기</b><span>꺼짐</span></div>
+      <button class="switch" id="swOn" role="switch" aria-checked="false" aria-label="알림 받기"></button>
+    </div>
   </section>
 
   <!-- 거부됨 -->
@@ -140,7 +197,7 @@
   const C = self.PUSH_CONFIG;
   const FN = C.SUPABASE_URL + "/functions/v1/push";
   const $ = (id) => document.getElementById(id);
-  const views = ["vInApp","vIosInstall","vUnsupported","vSubscribe","vSubscribed","vDenied"];
+  const views = ["vInApp","vIosInstall","vUnsupported","vSubscribe","vSubscribed","vDenied","vOff"];
   const show = (id) => views.forEach(v => $(v).classList.toggle("hide", v !== id));
   const toast = (m) => { const t = $("toast"); t.textContent = m; t.classList.add("show"); clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove("show"), 2800); };
   const store = { get(k){ try{return localStorage.getItem(k)||""}catch{return ""} }, set(k,v){ try{localStorage.setItem(k,v)}catch{} } };
@@ -158,8 +215,10 @@
   const groups = C.GROUPS || [];
   if (!groups.length) $("grpWrap").classList.add("hide");
   groups.forEach(g => { const o = document.createElement("option"); o.value = o.textContent = g; $("inGrp").appendChild(o); });
-  $("inName").value = store.get("voy_push_name");
-  $("inGrp").value = store.get("voy_push_grp");
+
+  const me = () => ({ name: store.get("voy_push_name"), emp: store.get("voy_push_emp"), grp: store.get("voy_push_grp") });
+  function fillForm() { const m = me(); $("inName").value = m.name; $("inEmp").value = m.emp; $("inGrp").value = m.grp; }
+  fillForm();
 
   async function call(action, data = {}) {
     const r = await fetch(FN, {
@@ -178,6 +237,69 @@
     return Uint8Array.from(raw, c => c.charCodeAt(0));
   }
 
+  // 입력값 검사 (알림 받기 "예"일 때만 이름·사번 필수)
+  function readForm(required) {
+    const name = $("inName").value.trim();
+    const emp = $("inEmp").value.replace(/\s/g, "").toUpperCase();
+    const grp = $("inGrp").value;
+    const empOk = /^[A-Z0-9-]{3,20}$/.test(emp);
+    $("inName").classList.toggle("bad", required && !name);
+    $("inEmp").classList.toggle("bad", required && !empOk);
+    if (required) {
+      if (!name) { $("formErr").textContent = "이름을 입력해주세요."; $("inName").focus(); return null; }
+      if (!emp) { $("formErr").textContent = "사번을 입력해주세요."; $("inEmp").focus(); return null; }
+      if (!empOk) { $("formErr").textContent = "사번은 영문·숫자 3~20자로 입력해주세요."; $("inEmp").focus(); return null; }
+    }
+    $("formErr").textContent = "";
+    return { name, emp: empOk ? emp : "", grp };
+  }
+  function saveMe(f) {
+    if (f.name) store.set("voy_push_name", f.name);
+    if (f.emp) store.set("voy_push_emp", f.emp);
+    store.set("voy_push_grp", f.grp || "");
+  }
+
+  // "알림을 받으시겠습니까?" 선택
+  let choice = null;      // "y" | "n" | null
+  function setChoice(v) {
+    choice = v;
+    $("yn").querySelectorAll("button").forEach(b => b.classList.toggle("sel", b.dataset.v === v));
+    const b = $("btnSub");
+    b.disabled = !v;
+    if (!v) b.textContent = "선택해주세요";
+    else if (v === "y") b.textContent = formMode === "new" ? "🔔 알림 받기" : "저장";
+    else b.textContent = formMode === "new" ? "확인" : "알림 끄고 저장";
+    $("formErr").textContent = "";
+    if (v === "n") { $("inName").classList.remove("bad"); $("inEmp").classList.remove("bad"); }
+  }
+  $("yn").querySelectorAll("button").forEach(b => b.onclick = () => setChoice(b.dataset.v));
+
+  // 구독 폼 모드: "new"(처음) | "edit"(정보 수정) | "need"(구독은 됐지만 사번 미등록)
+  let formMode = "new";
+  function showForm(mode, preset) {
+    formMode = mode;
+    const st = $("subStatus");
+    st.className = "status" + (mode === "new" ? "" : mode === "need" ? " warn" : " on");
+    st.lastChild.textContent = mode === "new" ? "알림 꺼짐" : mode === "need" ? "정보 등록 필요" : "알림 받는 중";
+    $("subTitle").textContent = mode === "new" ? "알림 설정" : mode === "need" ? "이름과 사번을 등록해주세요" : "내 정보 수정";
+    $("subDesc").innerHTML = mode === "new"
+      ? "이름과 사번을 입력하고, 알림을 받을지 선택해주세요."
+      : mode === "need" ? "본인에게 맞는 알림을 받으려면 이름과 사번이 필요해요." : "바뀐 정보를 입력하고 저장하세요.";
+    $("btnCancelEdit").classList.toggle("hide", mode !== "edit");
+    $("formErr").textContent = "";
+    fillForm();
+    setChoice(preset !== undefined ? preset : (mode === "new" ? null : "y"));
+    show("vSubscribe");
+  }
+
+  function showMe(prefix) {
+    const m = me();
+    $(prefix + "Av").textContent = (m.name || "?").slice(0, 1);
+    $(prefix + "Name").textContent = m.name;
+    $(prefix + "Sub").textContent = (m.emp ? "사번 " + m.emp : "") + (m.grp ? " · " + m.grp : "");
+    return m;
+  }
+
   let reg = null;
 
   async function refresh() {
@@ -194,30 +316,61 @@
     }
     const sub = await reg.pushManager.getSubscription();
     if (sub && Notification.permission === "granted") {
-      const n = store.get("voy_push_name"), g = store.get("voy_push_grp");
-      $("subInfo").textContent = (n ? n + "님, " : "") + (g ? "[" + g + "] " : "") + "새 공지가 올라오면 잠금화면에 알림이 표시됩니다.";
+      const m = me();
+      if (!m.name || !m.emp) return showForm("need");
+      showMe("me");
+      $("swNotify").classList.add("on"); $("swNotify").setAttribute("aria-checked", "true");
+      $("offConfirm").classList.add("hide");
       return show("vSubscribed");
     }
-    show("vSubscribe");
+    if (store.get("voy_push_off") === "1") {
+      const m = showMe("off");
+      $("offMe").classList.toggle("hide", !m.name);
+      return show("vOff");
+    }
+    showForm("new");
+  }
+
+  async function turnOn(f) {
+    if (Notification.permission !== "granted") {
+      const perm = await Notification.requestPermission();
+      if (perm !== "granted") { await refresh(); return false; }
+    }
+    reg = reg || await navigator.serviceWorker.ready;
+    let sub = await reg.pushManager.getSubscription();
+    if (!sub) sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: appKey() });
+    await call("subscribe", { subscription: sub.toJSON(), name: f.name, emp_no: f.emp, grp: f.grp });
+    saveMe(f); store.set("voy_push_off", "");
+    return true;
+  }
+
+  async function turnOff() {
+    const sub = reg && await reg.pushManager.getSubscription();
+    if (sub) { await call("unsubscribe", { endpoint: sub.endpoint }).catch(() => {}); await sub.unsubscribe(); }
+    store.set("voy_push_off", "1");
   }
 
   $("btnSub").onclick = async () => {
-    const b = $("btnSub"); b.disabled = true; b.textContent = "설정 중…";
+    if (!choice) { $("formErr").textContent = "알림을 받을지 선택해주세요."; return; }
+    const f = readForm(choice === "y"); if (!f) return;
+    const b = $("btnSub"); const label = b.textContent; b.disabled = true; b.textContent = "처리 중…";
     try {
-      const perm = await Notification.requestPermission();
-      if (perm !== "granted") { await refresh(); return; }
-      reg = reg || await navigator.serviceWorker.ready;
-      let sub = await reg.pushManager.getSubscription();
-      if (!sub) sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: appKey() });
-      const name = $("inName").value.trim(), grp = $("inGrp").value;
-      await call("subscribe", { subscription: sub.toJSON(), name, grp });
-      store.set("voy_push_name", name); store.set("voy_push_grp", grp);
-      toast("알림 설정 완료! 🔔");
+      if (choice === "y") {
+        if (await turnOn(f)) toast(formMode === "new" ? "알림 설정 완료! 🔔" : "저장했어요");
+      } else {
+        saveMe(f);
+        await turnOff();
+        toast("알림을 받지 않도록 설정했어요");
+      }
       await refresh();
     } catch (e) {
-      toast("설정 실패: " + e.message);
-    } finally { b.disabled = false; b.textContent = "🔔 알림 받기"; }
+      toast("실패: " + e.message);
+    } finally { b.disabled = false; b.textContent = label; }
   };
+  ["inName","inEmp"].forEach(id => $(id).addEventListener("keydown", e => { if (e.key === "Enter") $("btnSub").click(); }));
+
+  $("btnEdit").onclick = () => showForm("edit");
+  $("btnCancelEdit").onclick = () => refresh();
 
   $("btnTest").onclick = async () => {
     const b = $("btnTest"); b.disabled = true;
@@ -232,16 +385,22 @@
     } finally { setTimeout(() => b.disabled = false, 3000); }
   };
 
-  $("btnUnsub").onclick = async () => {
-    const b = $("btnUnsub");
-    if (b.dataset.confirm !== "1") { b.dataset.confirm = "1"; b.textContent = "한 번 더 누르면 알림이 꺼져요"; setTimeout(() => { b.dataset.confirm = ""; b.textContent = "알림 끄기"; }, 3000); return; }
-    try {
-      const sub = await reg.pushManager.getSubscription();
-      if (sub) { await call("unsubscribe", { endpoint: sub.endpoint }).catch(() => {}); await sub.unsubscribe(); }
-      toast("알림을 껐어요");
-    } catch (e) { toast("오류: " + e.message); }
-    b.dataset.confirm = ""; b.textContent = "알림 끄기";
-    refresh();
+  // 스위치: 켜짐 → 끄기 확인
+  $("swNotify").onclick = () => $("offConfirm").classList.toggle("hide");
+  $("btnOffNo").onclick = () => $("offConfirm").classList.add("hide");
+  $("btnOffYes").onclick = async () => {
+    const b = $("btnOffYes"); b.disabled = true;
+    try { await turnOff(); toast("알림을 껐어요"); } catch (e) { toast("오류: " + e.message); }
+    b.disabled = false; refresh();
+  };
+  // 스위치: 꺼짐 → 다시 켜기
+  $("swOn").onclick = async () => {
+    const m = me();
+    if (!m.name || !m.emp) return showForm("new", "y");
+    const sw = $("swOn"); sw.classList.add("on"); sw.disabled = true;
+    try { if (await turnOn({ name: m.name, emp: m.emp, grp: m.grp })) toast("알림을 다시 켰어요 🔔"); }
+    catch (e) { toast("실패: " + e.message); }
+    sw.classList.remove("on"); sw.disabled = false; refresh();
   };
 
   $("btnExternal").onclick = () => {

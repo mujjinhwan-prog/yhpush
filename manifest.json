@@ -1,7 +1,7 @@
 {
-  "name": "VOY 알림",
-  "short_name": "VOY 알림",
-  "description": "유한양행 VOY 알림 수신 앱",
+  "name": "YH Push",
+  "short_name": "YH Push",
+  "description": "유한양행 YH Push 알림 수신 앱",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",

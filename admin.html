@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex">
-<title>VOY 알림 관리자</title>
+<title>YH Push 관리자</title>
 <link rel="icon" href="icons/icon-192.png">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
 <script src="config.js"></script>
@@ -38,6 +38,34 @@
   .actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
   .result{font-size:14px;margin-top:14px;padding:12px 14px;border-radius:10px;background:var(--soft);display:none}
   .result.show{display:block}
+
+  /* ---- 대상 선택 ---- */
+  .seg{display:flex;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:3px;margin-bottom:12px}
+  .seg button{flex:1;font:inherit;font-size:14px;font-weight:600;border:0;background:transparent;color:var(--muted);padding:9px;border-radius:8px;cursor:pointer}
+  .seg button.on{background:var(--card);color:var(--text);box-shadow:0 1px 3px rgba(0,0,0,.12)}
+  .picker{border:1px solid var(--line);border-radius:12px;padding:12px;background:var(--bg)}
+  .picker input,.picker textarea{background:var(--card);margin-bottom:8px}
+  .pk-top{display:flex;gap:8px;align-items:flex-start}
+  .pk-top input{flex:1}
+  .pk-top .btn{white-space:nowrap;margin-top:2px}
+  .pk-paste textarea{min-height:70px}
+  .pk-paste .actions{margin-bottom:8px}
+  .pk-bar{display:flex;justify-content:space-between;align-items:center;font-size:13px;color:var(--muted);margin:4px 2px 6px}
+  .pk-bar #pkCount{font-weight:700;color:var(--accent)}
+  .lnk{font:inherit;font-size:13px;background:none;border:0;color:var(--accent);cursor:pointer;padding:0}
+  .pk-list{max-height:260px;overflow-y:auto;border:1px solid var(--line);border-radius:10px;background:var(--card)}
+  .pk-row{display:flex;align-items:center;gap:10px;padding:9px 12px;border-bottom:1px solid var(--line);cursor:pointer;font-size:14px}
+  .pk-row:last-child{border-bottom:0}
+  .pk-row:hover{background:var(--soft)}
+  .pk-row input{width:18px;height:18px;margin:0;flex:0 0 18px;accent-color:var(--accent)}
+  .pk-row .nm{font-weight:600;min-width:64px}
+  .pk-row .em{color:var(--muted);font-variant-numeric:tabular-nums}
+  .pk-row .gp{margin-left:auto;font-size:12px;color:var(--muted);background:var(--soft);padding:2px 8px;border-radius:999px}
+  .pk-row .dv{font-size:12px;color:var(--muted)}
+  .pk-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+  .pk-chips:empty{display:none}
+  .chip-s{display:inline-flex;align-items:center;gap:4px;font-size:12.5px;background:var(--accent);color:#fff;border-radius:999px;padding:4px 6px 4px 10px}
+  .chip-s button{border:0;background:rgba(255,255,255,.25);color:#fff;border-radius:50%;width:18px;height:18px;line-height:18px;padding:0;cursor:pointer;font-size:12px}
 
   /* ---- 미리보기: iOS 잠금화면 ---- */
   .phone{border-radius:34px;padding:58px 12px 26px;min-height:340px;position:relative;overflow:hidden;
@@ -106,7 +134,7 @@
 <div id="vMain" class="hide">
   <header>
     <img src="icons/icon-192.png" alt="">
-    <h1 id="hdrName">VOY 알림 관리자</h1>
+    <h1 id="hdrName">YH Push 관리자</h1>
     <span class="meta" id="hdrMeta"></span>
     <button class="btn ghost sm" id="btnLogout">로그아웃</button>
   </header>
@@ -121,18 +149,42 @@
         <textarea id="fBody" maxlength="300" placeholder="예: 10월 실적 리포트가 올라왔습니다. 눌러서 확인하세요!"></textarea>
         <label for="fUrl">클릭 시 이동할 링크 <small>비워두면 앱 첫 화면</small></label>
         <input id="fUrl" type="url" placeholder="https://notice.ourclinic.kr/...">
-        <div class="two">
-          <div>
-            <label for="fTarget">받는 대상</label>
-            <select id="fTarget"></select>
+        <label>받는 대상</label>
+        <div class="seg" id="modeSeg">
+          <button data-m="all" class="on">전체</button>
+          <button data-m="group">소속별</button>
+          <button data-m="people">개인 선택</button>
+        </div>
+        <div id="tgGroup" class="hide">
+          <select id="fGroup"></select>
+        </div>
+        <div id="tgPeople" class="hide picker">
+          <div class="pk-top">
+            <input id="pkSearch" placeholder="이름·사번·소속 검색" autocomplete="off">
+            <button class="btn ghost sm" id="pkPasteBtn" type="button">사번 붙여넣기</button>
           </div>
+          <div id="pkPaste" class="hide pk-paste">
+            <textarea id="pkPasteTxt" placeholder="사번을 줄바꿈·쉼표·공백으로 구분해 붙여넣으세요&#10;예) 2021001, 2021002&#10;2019015"></textarea>
+            <div class="actions"><button class="btn sm" id="pkPasteApply" type="button">선택에 추가</button><span class="hint" id="pkPasteMsg" style="margin:0"></span></div>
+          </div>
+          <div class="pk-bar">
+            <span id="pkCount">0명 선택</span>
+            <span><button class="lnk" id="pkAll" type="button">검색결과 모두 선택</button> · <button class="lnk" id="pkNone" type="button">선택 해제</button></span>
+          </div>
+          <div class="pk-list" id="pkList"><div class="hint" style="padding:12px">불러오는 중…</div></div>
+          <div class="pk-chips" id="pkChips"></div>
+        </div>
+
+        <div class="two" style="margin-top:16px">
           <div>
             <label for="fIcon">아이콘 <small>안드로이드용</small></label>
             <input id="fIcon" placeholder="icons/icon-192.png">
           </div>
+          <div>
+            <label for="fImage">큰 이미지 URL <small>선택 · 안드로이드</small></label>
+            <input id="fImage" type="url" placeholder="https://.../banner.jpg">
+          </div>
         </div>
-        <label for="fImage">큰 이미지 URL <small>선택 · 안드로이드에서만 표시</small></label>
-        <input id="fImage" type="url" placeholder="https://.../banner.jpg">
 
         <div class="actions">
           <button class="btn" id="btnSend">보내기</button>
@@ -151,7 +203,7 @@
           <div class="phone">
             <div class="clock" id="pClock">14:18</div>
             <div class="date" id="pDate"></div>
-            <div class="grpTitle"><b id="pApp">VOY 알림</b><span>간략히 보기</span></div>
+            <div class="grpTitle"><b id="pApp">YH Push</b><span>간략히 보기</span></div>
             <div class="noti">
               <img id="pIcon" src="icons/icon-192.png" alt="">
               <div class="c">
@@ -165,7 +217,7 @@
         </div>
         <div id="pAnd" class="hide">
           <div class="andr">
-            <div class="h"><img src="icons/badge-72.png" alt="" style="background:#4ea1ff"><span id="pApp2">VOY 알림</span> · 지금</div>
+            <div class="h"><img src="icons/badge-72.png" alt="" style="background:#4ea1ff"><span id="pApp2">YH Push</span> · 지금</div>
             <div class="row">
               <div><b id="pTitle2">제목</b><p id="pBody2">내용</p></div>
               <img class="ic" id="pIcon2" src="icons/icon-192.png" alt="">
@@ -197,8 +249,8 @@
       <h2>구독자 목록 <button class="btn ghost sm" id="btnSubs">불러오기</button></h2>
       <div class="scroll">
         <table>
-          <thead><tr><th>이름</th><th>소속</th><th>기기</th><th>등록일</th><th></th></tr></thead>
-          <tbody id="subs"><tr><td colspan="5" class="hint">"불러오기"를 누르면 표시됩니다.</td></tr></tbody>
+          <thead><tr><th>이름</th><th>사번</th><th>소속</th><th>기기</th><th>등록일</th><th></th></tr></thead>
+          <tbody id="subs"><tr><td colspan="6" class="hint">"불러오기"를 누르면 표시됩니다.</td></tr></tbody>
         </table>
       </div>
     </section>
@@ -212,11 +264,15 @@
   const $ = (id) => document.getElementById(id);
   const esc = (s) => String(s ?? "").replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
   const store = {
-    get(k){ try{return sessionStorage.getItem(k)||localStorage.getItem(k)||""}catch{return ""} },
+    get(k){ try{return localStorage.getItem(k)||""}catch{return ""} },
     set(k,v){ try{localStorage.setItem(k,v)}catch{} },
-    del(k){ try{localStorage.removeItem(k);sessionStorage.removeItem(k)}catch{} },
+    del(k){ try{localStorage.removeItem(k)}catch{} },
   };
   let KEY = store.get("voy_push_admin");
+  let STATS = { total: 0, groups: {}, messages: [] };
+  let PEOPLE = [];               // [{emp, name, grp, devices}]
+  const SELECTED = new Map();    // emp -> name
+  let MODE = "all";
 
   document.title = C.APP_NAME + " 관리자";
   $("hdrName").textContent = C.APP_NAME + " 관리자";
@@ -241,31 +297,34 @@
     try {
       await loadStats();
       $("vLogin").classList.add("hide"); $("vMain").classList.remove("hide");
+      loadPeople();
     } catch (e) {
       $("vLogin").classList.remove("hide"); $("vMain").classList.add("hide");
       if (KEY) $("loginErr").textContent = e.message;
     }
   }
   function logout() { KEY = ""; store.del("voy_push_admin"); $("vMain").classList.add("hide"); $("vLogin").classList.remove("hide"); }
-  $("btnLogin").onclick = () => { KEY = $("inKey").value.trim(); if (!KEY) return; store.set("voy_push_admin", KEY); tryLogin(); };
+  $("btnLogin").onclick = () => {
+    KEY = $("inKey").value.trim(); if (!KEY) return;
+    if (/[^\x20-\x7E]/.test(KEY)) { $("loginErr").textContent = "관리자 키는 영문·숫자·기호만 사용할 수 있습니다."; KEY = ""; return; }
+    store.set("voy_push_admin", KEY); tryLogin();
+  };
   $("inKey").onkeydown = (e) => { if (e.key === "Enter") $("btnLogin").click(); };
   $("btnLogout").onclick = logout;
 
   // ---------- 통계 / 기록 ----------
   async function loadStats() {
     const s = await call("stats");
-    $("hdrMeta").textContent = "구독자 " + s.total + "명";
+    STATS = s;
+    $("hdrMeta").textContent = "구독자 " + s.total + "명" + (s.devices && s.devices !== s.total ? " (기기 " + s.devices + "대)" : "");
     const chips = [`<div class="chip"><b>${s.total}</b><span>전체</span></div>`]
       .concat(Object.entries(s.groups).sort().map(([g, n]) => `<div class="chip"><b>${n}</b><span>${esc(g)}</span></div>`));
     $("stats").innerHTML = chips.join("");
 
-    const opts = ["전체", ...(C.GROUPS || [])];
-    const cur = $("fTarget").value || "전체";
-    $("fTarget").innerHTML = opts.map(g => {
-      const n = g === "전체" ? s.total : (s.groups[g] || 0);
-      return `<option value="${esc(g)}">${esc(g)} (${n}명)</option>`;
-    }).join("");
-    $("fTarget").value = cur;
+    const cur = $("fGroup").value;
+    const opts = [...new Set([...(C.GROUPS || []), ...Object.keys(s.groups).filter(g => g !== "미지정")])];
+    $("fGroup").innerHTML = opts.map(g => `<option value="${esc(g)}">${esc(g)} (${s.groups[g] || 0}명)</option>`).join("");
+    if (cur) $("fGroup").value = cur;
     updateHint();
 
     $("history").innerHTML = s.messages.length ? s.messages.map(m => `
@@ -280,26 +339,115 @@
       const m = s.messages.find(x => String(x.id) === b.dataset.re);
       $("fTitle").value = m.title || ""; $("fBody").value = m.body || ""; $("fUrl").value = m.url || "";
       $("fIcon").value = m.icon || C.DEFAULT_ICON; $("fImage").value = m.image || "";
-      if ([...$("fTarget").options].some(o => o.value === m.target)) $("fTarget").value = m.target;
-      preview(); scrollTo({ top: 0, behavior: "smooth" });
+      if (m.target === "전체") setMode("all");
+      else if ([...$("fGroup").options].some(o => o.value === m.target)) { setMode("group"); $("fGroup").value = m.target; }
+      preview(); updateHint(); scrollTo({ top: 0, behavior: "smooth" });
     });
     return s;
   }
-  $("btnReload").onclick = () => loadStats().catch(e => alertBox(e.message, true));
+  $("btnReload").onclick = () => { loadStats().catch(e => alertBox(e.message, true)); loadPeople(); };
 
-  $("btnSubs").onclick = async () => {
+  // ---------- 구독자(사람) 목록 ----------
+  let RAW_SUBS = [];
+  async function loadPeople() {
     try {
       const { subscribers } = await call("subscribers");
+      RAW_SUBS = subscribers;
+      const map = new Map();
+      for (const s of subscribers) {
+        if (!s.emp_no) continue;               // 사번 없는 구독은 개인 선택 대상에서 제외
+        const p = map.get(s.emp_no) || { emp: s.emp_no, name: s.name || "", grp: s.grp || "", devices: 0 };
+        p.devices++; if (!p.name && s.name) p.name = s.name; if (!p.grp && s.grp) p.grp = s.grp;
+        map.set(s.emp_no, p);
+      }
+      PEOPLE = [...map.values()].sort((a, b) => a.name.localeCompare(b.name, "ko") || a.emp.localeCompare(b.emp));
+      renderPicker();
+    } catch (e) { $("pkList").innerHTML = `<div class="hint" style="padding:12px">${esc(e.message)}</div>`; }
+  }
+
+  function filtered() {
+    const q = $("pkSearch").value.trim().toLowerCase();
+    if (!q) return PEOPLE;
+    return PEOPLE.filter(p => (p.name + " " + p.emp + " " + p.grp).toLowerCase().includes(q));
+  }
+
+  function renderPicker() {
+    const list = filtered();
+    $("pkList").innerHTML = list.length ? list.map(p => `
+      <label class="pk-row">
+        <input type="checkbox" data-emp="${esc(p.emp)}" ${SELECTED.has(p.emp) ? "checked" : ""}>
+        <span class="nm">${esc(p.name || "(이름 없음)")}</span>
+        <span class="em">${esc(p.emp)}</span>
+        ${p.devices > 1 ? `<span class="dv">기기 ${p.devices}</span>` : ""}
+        ${p.grp ? `<span class="gp">${esc(p.grp)}</span>` : ""}
+      </label>`).join("")
+      : `<div class="hint" style="padding:12px">${PEOPLE.length ? "검색 결과가 없습니다." : "사번을 등록한 구독자가 아직 없습니다."}</div>`;
+    $("pkList").querySelectorAll("input[data-emp]").forEach(cb => cb.onchange = () => {
+      const p = PEOPLE.find(x => x.emp === cb.dataset.emp);
+      cb.checked ? SELECTED.set(p.emp, p.name || p.emp) : SELECTED.delete(p.emp);
+      renderSelected();
+    });
+    renderSelected();
+  }
+
+  function renderSelected() {
+    $("pkCount").textContent = SELECTED.size + "명 선택";
+    $("pkChips").innerHTML = [...SELECTED.entries()].map(([emp, nm]) =>
+      `<span class="chip-s">${esc(nm)}<button type="button" data-x="${esc(emp)}" aria-label="제외">×</button></span>`).join("");
+    $("pkChips").querySelectorAll("[data-x]").forEach(b => b.onclick = () => {
+      SELECTED.delete(b.dataset.x);
+      const cb = $("pkList").querySelector(`input[data-emp="${CSS.escape(b.dataset.x)}"]`); if (cb) cb.checked = false;
+      renderSelected();
+    });
+    updateHint();
+  }
+
+  $("pkSearch").addEventListener("input", renderPicker);
+  $("pkAll").onclick = () => { filtered().forEach(p => SELECTED.set(p.emp, p.name || p.emp)); renderPicker(); };
+  $("pkNone").onclick = () => { SELECTED.clear(); renderPicker(); };
+  $("pkPasteBtn").onclick = () => { $("pkPaste").classList.toggle("hide"); if (!$("pkPaste").classList.contains("hide")) $("pkPasteTxt").focus(); };
+  $("pkPasteApply").onclick = () => {
+    const ids = [...new Set($("pkPasteTxt").value.toUpperCase().split(/[\s,;]+/).filter(Boolean))];
+    const found = [], missing = [];
+    ids.forEach(id => { const p = PEOPLE.find(x => x.emp === id); p ? (SELECTED.set(p.emp, p.name || p.emp), found.push(id)) : missing.push(id); });
+    $("pkPasteMsg").innerHTML = `${found.length}명 추가` + (missing.length ? ` · <span style="color:var(--bad)">미구독 ${missing.length}명: ${esc(missing.slice(0, 8).join(", "))}${missing.length > 8 ? " …" : ""}</span>` : "");
+    renderPicker();
+  };
+
+  // ---------- 대상 모드 ----------
+  function setMode(m) {
+    MODE = m;
+    $("modeSeg").querySelectorAll("button").forEach(b => b.classList.toggle("on", b.dataset.m === m));
+    $("tgGroup").classList.toggle("hide", m !== "group");
+    $("tgPeople").classList.toggle("hide", m !== "people");
+    updateHint();
+  }
+  $("modeSeg").querySelectorAll("button").forEach(b => b.onclick = (e) => { e.preventDefault(); setMode(b.dataset.m); });
+  $("fGroup").onchange = updateHint;
+
+  function updateHint() {
+    let t = "";
+    if (MODE === "all") t = `전체 ${STATS.total}명에게 발송`;
+    else if (MODE === "group") { const g = $("fGroup").value; t = g ? `${g} ${STATS.groups[g] || 0}명에게 발송` : "소속을 선택하세요"; }
+    else t = SELECTED.size ? `선택한 ${SELECTED.size}명에게 발송` : "받을 사람을 선택하세요";
+    $("sendHint").textContent = t;
+  }
+
+  // ---------- 구독자 관리 표 ----------
+  $("btnSubs").onclick = async () => {
+    try {
+      if (!RAW_SUBS.length) await loadPeople();
+      const subscribers = RAW_SUBS;
       $("subs").innerHTML = subscribers.length ? subscribers.map(s => `
-        <tr><td>${esc(s.name || "—")}</td><td>${esc(s.grp || "미지정")}</td>
+        <tr><td>${esc(s.name || "—")}</td><td>${esc(s.emp_no || "미등록")}</td><td>${esc(s.grp || "미지정")}</td>
         <td><div class="sub">${esc(device(s.user_agent))}</div></td>
         <td>${new Date(s.created_at).toLocaleDateString("ko-KR")}</td>
         <td><button class="btn ghost sm" data-del="${s.id}">삭제</button></td></tr>`).join("")
-        : `<tr><td colspan="5" class="hint">구독자가 없습니다.</td></tr>`;
+        : `<tr><td colspan="6" class="hint">구독자가 없습니다.</td></tr>`;
       $("subs").querySelectorAll("[data-del]").forEach(b => b.onclick = async () => {
         if (b.dataset.c !== "1") { b.dataset.c = "1"; b.textContent = "확인"; b.classList.add("warn"); return; }
         await call("remove_subscriber", { id: Number(b.dataset.del) });
-        b.closest("tr").remove(); loadStats();
+        b.closest("tr").remove(); loadStats(); loadPeople();
       });
     } catch (e) { alertBox(e.message, true); }
   };
@@ -334,8 +482,6 @@
   preview();
 
   // ---------- 발송 ----------
-  function updateHint() { const o = $("fTarget").selectedOptions[0]; $("sendHint").textContent = o ? o.textContent + "에게 발송" : ""; }
-  $("fTarget").onchange = updateHint;
   function alertBox(msg, bad) { const r = $("result"); r.innerHTML = msg; r.style.color = bad ? "var(--bad)" : ""; r.classList.add("show"); }
 
   $("btnSend").onclick = async () => {
@@ -344,6 +490,8 @@
     if (!title) { alertBox("제목을 입력하세요.", true); $("fTitle").focus(); return; }
     const url = $("fUrl").value.trim();
     if (url && !/^https?:\/\//i.test(url)) { alertBox("링크는 https:// 로 시작해야 합니다.", true); $("fUrl").focus(); return; }
+    if (MODE === "group" && !$("fGroup").value) { alertBox("소속을 선택하세요.", true); return; }
+    if (MODE === "people" && !SELECTED.size) { alertBox("받을 사람을 한 명 이상 선택하세요.", true); return; }
     if (b.dataset.c !== "1") { b.dataset.c = "1"; b.textContent = "정말 보낼까요? 한 번 더 클릭"; b.classList.add("warn");
       setTimeout(() => { b.dataset.c = ""; b.textContent = "보내기"; b.classList.remove("warn"); }, 4000); return; }
     b.dataset.c = ""; b.classList.remove("warn"); b.disabled = true; b.textContent = "보내는 중…";
@@ -351,14 +499,18 @@
       let icon = $("fIcon").value.trim();
       if (icon && !/^https?:\/\//i.test(icon)) icon = new URL(icon, location.href).href;
       const r = await call("send", {
-        title, body: $("fBody").value.trim(), url, icon, image: $("fImage").value.trim(), target: $("fTarget").value,
+        title, body: $("fBody").value.trim(), url, icon, image: $("fImage").value.trim(),
+        mode: MODE, grp: $("fGroup").value, emp_nos: [...SELECTED.keys()],
       });
-      alertBox(`✅ 발송 완료 — 대상 ${r.total}명 · 성공 <b>${r.sent}</b> · 실패 ${r.failed}` + (r.removed ? ` (만료된 구독 ${r.removed}건 자동 정리)` : ""));
+      alertBox(`✅ 발송 완료 — ${r.people}명(기기 ${r.total}대) · 성공 <b>${r.sent}</b> · 실패 ${r.failed}` + (r.removed ? ` (만료된 구독 ${r.removed}건 자동 정리)` : ""));
       loadStats();
     } catch (e) { alertBox("발송 실패: " + esc(e.message), true); }
     finally { b.disabled = false; b.textContent = "보내기"; }
   };
-  $("btnClear").onclick = () => { ["fTitle","fBody","fUrl","fImage"].forEach(id => $(id).value = ""); $("fIcon").value = C.DEFAULT_ICON; $("result").classList.remove("show"); preview(); };
+  $("btnClear").onclick = () => {
+    ["fTitle","fBody","fUrl","fImage"].forEach(id => $(id).value = ""); $("fIcon").value = C.DEFAULT_ICON;
+    $("result").classList.remove("show"); SELECTED.clear(); renderPicker(); setMode("all"); preview();
+  };
 
   KEY ? tryLogin() : $("vLogin").classList.remove("hide");
 })();
