@@ -1,0 +1,263 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>VOY 알림</title>
+<meta name="theme-color" content="#0f1b2d">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="VOY 알림">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<script src="config.js"></script>
+<style>
+  :root{
+    --bg:#0f1b2d; --bg2:#16263d; --card:rgba(255,255,255,.06); --line:rgba(255,255,255,.12);
+    --text:#eef3fa; --muted:#9fb0c6; --accent:#4ea1ff; --ok:#3ecf8e; --warn:#ffb547; --bad:#ff6b6b;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--bg);color:var(--text);
+    font-family:Pretendard,-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo",sans-serif;-webkit-font-smoothing:antialiased}
+  body{min-height:100vh;background:radial-gradient(1200px 600px at 50% -200px,#24406a 0%,transparent 70%),var(--bg)}
+  .wrap{max-width:460px;margin:0 auto;padding:calc(28px + env(safe-area-inset-top)) 16px 40px}
+  .brand{display:flex;align-items:center;gap:14px;margin-bottom:22px}
+  .brand img{width:56px;height:56px;border-radius:14px;box-shadow:0 6px 20px rgba(0,0,0,.35)}
+  .brand h1{font-size:22px;margin:0;letter-spacing:-.3px}
+  .brand p{margin:2px 0 0;color:var(--muted);font-size:13px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:20px;margin-bottom:14px;backdrop-filter:blur(10px)}
+  .card h2{font-size:17px;margin:0 0 6px}
+  .card p{color:var(--muted);font-size:14px;line-height:1.6;margin:0 0 14px}
+  .status{display:inline-flex;align-items:center;gap:8px;font-size:13px;font-weight:600;padding:6px 12px;border-radius:999px;background:rgba(255,255,255,.08);margin-bottom:14px}
+  .dot{width:8px;height:8px;border-radius:50%;background:var(--muted)}
+  .status.on .dot{background:var(--ok);box-shadow:0 0 0 4px rgba(62,207,142,.18)}
+  .status.warn .dot{background:var(--warn)}
+  .status.off .dot{background:var(--bad)}
+  label{display:block;font-size:13px;color:var(--muted);margin:0 0 6px}
+  input,select{width:100%;font:inherit;font-size:16px;color:var(--text);background:rgba(0,0,0,.25);border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:12px;outline:none}
+  input:focus,select:focus{border-color:var(--accent)}
+  select option{color:#111}
+  .btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;font:inherit;font-size:16px;font-weight:700;border:0;border-radius:14px;padding:15px;cursor:pointer;background:var(--accent);color:#06203f;transition:transform .08s,opacity .2s}
+  .btn:active{transform:scale(.98)}
+  .btn[disabled]{opacity:.5;pointer-events:none}
+  .btn.ghost{background:rgba(255,255,255,.08);color:var(--text);font-weight:600}
+  .btn.danger{background:transparent;color:var(--bad);font-weight:600;font-size:14px;padding:10px}
+  .row{display:flex;gap:10px}.row .btn{flex:1}
+  ol.steps{margin:0;padding:0;list-style:none;counter-reset:s}
+  ol.steps li{counter-increment:s;display:flex;gap:12px;align-items:flex-start;padding:10px 0;border-top:1px solid var(--line);font-size:14px;line-height:1.55}
+  ol.steps li:first-child{border-top:0}
+  ol.steps li::before{content:counter(s);flex:0 0 26px;height:26px;border-radius:50%;background:rgba(78,161,255,.18);color:var(--accent);display:grid;place-items:center;font-weight:700;font-size:13px}
+  .ico{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:6px;background:rgba(255,255,255,.12);vertical-align:-5px;margin:0 2px}
+  .ico svg{width:14px;height:14px}
+  .toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom));transform:translateX(-50%) translateY(20px);background:#fff;color:#111;font-size:14px;font-weight:600;padding:12px 18px;border-radius:12px;opacity:0;transition:.25s;pointer-events:none;max-width:90vw;text-align:center}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  .hide{display:none!important}
+  .foot{text-align:center;color:var(--muted);font-size:12px;margin-top:20px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="brand">
+    <img src="icons/icon-192.png" alt="">
+    <div><h1 id="appName">VOY 알림</h1><p>중요한 공지를 휴대폰 알림으로 받아보세요</p></div>
+  </div>
+
+  <!-- 카카오톡 등 인앱 브라우저 -->
+  <section class="card hide" id="vInApp">
+    <span class="status warn"><span class="dot"></span>외부 브라우저 필요</span>
+    <h2>Safari·Chrome에서 열어주세요</h2>
+    <p>카카오톡 같은 앱 안의 브라우저에서는 알림을 설정할 수 없어요.</p>
+    <button class="btn" id="btnExternal">기본 브라우저로 열기</button>
+  </section>
+
+  <!-- iOS: 홈 화면 추가 안내 -->
+  <section class="card hide" id="vIosInstall">
+    <span class="status warn"><span class="dot"></span>홈 화면에 추가 필요</span>
+    <h2>아이폰은 먼저 앱으로 설치해주세요</h2>
+    <p>iOS는 홈 화면에 추가한 앱에서만 알림을 받을 수 있어요. (iOS 16.4 이상)</p>
+    <ol class="steps">
+      <li><span>Safari 하단의 <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12M7 8l5-5 5 5M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6"/></svg></span> <b>공유</b> 버튼을 누르세요</span></li>
+      <li><span>목록에서 <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="M12 8v8M8 12h8"/></svg></span> <b>홈 화면에 추가</b>를 선택하세요</span></li>
+      <li><span>홈 화면에 생긴 <b id="appName2">VOY 알림</b> 아이콘으로 다시 열어주세요</span></li>
+    </ol>
+  </section>
+
+  <!-- 미지원 -->
+  <section class="card hide" id="vUnsupported">
+    <span class="status off"><span class="dot"></span>지원되지 않음</span>
+    <h2>이 브라우저는 알림을 지원하지 않아요</h2>
+    <p>안드로이드는 Chrome, 아이폰은 Safari(iOS 16.4 이상)에서 열어주세요.</p>
+  </section>
+
+  <!-- 구독 신청 -->
+  <section class="card hide" id="vSubscribe">
+    <span class="status"><span class="dot"></span>알림 꺼짐</span>
+    <h2>알림 받기</h2>
+    <p>버튼을 누르고 <b>허용</b>을 선택하면 설정이 끝나요.</p>
+    <label for="inName">이름 (선택)</label>
+    <input id="inName" maxlength="40" placeholder="예: 홍길동" autocomplete="name">
+    <div id="grpWrap">
+      <label for="inGrp">소속 (선택)</label>
+      <select id="inGrp"><option value="">선택 안 함</option></select>
+    </div>
+    <button class="btn" id="btnSub">🔔 알림 받기</button>
+  </section>
+
+  <!-- 구독 완료 -->
+  <section class="card hide" id="vSubscribed">
+    <span class="status on"><span class="dot"></span>알림 받는 중</span>
+    <h2>설정이 완료되었어요</h2>
+    <p id="subInfo">새 공지가 올라오면 잠금화면에 알림이 표시됩니다.</p>
+    <div class="row">
+      <button class="btn ghost" id="btnTest">테스트 알림 받기</button>
+    </div>
+    <button class="btn danger" id="btnUnsub" style="margin-top:8px">알림 끄기</button>
+  </section>
+
+  <!-- 거부됨 -->
+  <section class="card hide" id="vDenied">
+    <span class="status off"><span class="dot"></span>알림이 차단됨</span>
+    <h2>알림 권한을 다시 켜주세요</h2>
+    <p id="deniedHelp"></p>
+  </section>
+
+  <!-- 안드로이드 설치 권유 -->
+  <section class="card hide" id="vAndroidInstall">
+    <h2>홈 화면에 앱 추가</h2>
+    <p>앱처럼 아이콘으로 바로 열 수 있어요. (알림은 설치하지 않아도 받을 수 있어요)</p>
+    <button class="btn ghost" id="btnInstall">📲 홈 화면에 설치</button>
+  </section>
+
+  <div class="foot">Voice of YUHAN</div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+(() => {
+  const C = self.PUSH_CONFIG;
+  const FN = C.SUPABASE_URL + "/functions/v1/push";
+  const $ = (id) => document.getElementById(id);
+  const views = ["vInApp","vIosInstall","vUnsupported","vSubscribe","vSubscribed","vDenied"];
+  const show = (id) => views.forEach(v => $(v).classList.toggle("hide", v !== id));
+  const toast = (m) => { const t = $("toast"); t.textContent = m; t.classList.add("show"); clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove("show"), 2800); };
+  const store = { get(k){ try{return localStorage.getItem(k)||""}catch{return ""} }, set(k,v){ try{localStorage.setItem(k,v)}catch{} } };
+
+  document.title = C.APP_NAME; $("appName").textContent = C.APP_NAME; $("appName2").textContent = C.APP_NAME;
+
+  const ua = navigator.userAgent;
+  const isIOS = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+  const isAndroid = /Android/i.test(ua);
+  const isStandalone = matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
+  const inApp = /KAKAOTALK|NAVER\(inapp|Instagram|FBAN|FBAV|Line\//i.test(ua);
+  const supported = "serviceWorker" in navigator && "PushManager" in window && "Notification" in window;
+
+  // 그룹 옵션
+  const groups = C.GROUPS || [];
+  if (!groups.length) $("grpWrap").classList.add("hide");
+  groups.forEach(g => { const o = document.createElement("option"); o.value = o.textContent = g; $("inGrp").appendChild(o); });
+  $("inName").value = store.get("voy_push_name");
+  $("inGrp").value = store.get("voy_push_grp");
+
+  async function call(action, data = {}) {
+    const r = await fetch(FN, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", apikey: C.SUPABASE_ANON_KEY, Authorization: "Bearer " + C.SUPABASE_ANON_KEY },
+      body: JSON.stringify({ action, ...data }),
+    });
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(j.error || ("오류 " + r.status));
+    return j;
+  }
+
+  function appKey() {
+    const s = C.VAPID_PUBLIC_KEY.replace(/-/g, "+").replace(/_/g, "/");
+    const raw = atob(s + "===".slice((s.length + 3) % 4));
+    return Uint8Array.from(raw, c => c.charCodeAt(0));
+  }
+
+  let reg = null;
+
+  async function refresh() {
+    if (inApp) return show("vInApp");
+    if (isIOS && !isStandalone) return show("vIosInstall");
+    if (!supported) return show("vUnsupported");
+    reg = reg || await navigator.serviceWorker.register("sw.js");
+    await navigator.serviceWorker.ready;
+    if (Notification.permission === "denied") {
+      $("deniedHelp").innerHTML = isIOS
+        ? "<b>설정 → 알림 → " + C.APP_NAME + "</b>에서 알림 허용을 켜주세요."
+        : "주소창 왼쪽 <b>자물쇠/설정 아이콘 → 권한 → 알림</b>을 허용으로 바꾼 뒤 새로고침해주세요.";
+      return show("vDenied");
+    }
+    const sub = await reg.pushManager.getSubscription();
+    if (sub && Notification.permission === "granted") {
+      const n = store.get("voy_push_name"), g = store.get("voy_push_grp");
+      $("subInfo").textContent = (n ? n + "님, " : "") + (g ? "[" + g + "] " : "") + "새 공지가 올라오면 잠금화면에 알림이 표시됩니다.";
+      return show("vSubscribed");
+    }
+    show("vSubscribe");
+  }
+
+  $("btnSub").onclick = async () => {
+    const b = $("btnSub"); b.disabled = true; b.textContent = "설정 중…";
+    try {
+      const perm = await Notification.requestPermission();
+      if (perm !== "granted") { await refresh(); return; }
+      reg = reg || await navigator.serviceWorker.ready;
+      let sub = await reg.pushManager.getSubscription();
+      if (!sub) sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: appKey() });
+      const name = $("inName").value.trim(), grp = $("inGrp").value;
+      await call("subscribe", { subscription: sub.toJSON(), name, grp });
+      store.set("voy_push_name", name); store.set("voy_push_grp", grp);
+      toast("알림 설정 완료! 🔔");
+      await refresh();
+    } catch (e) {
+      toast("설정 실패: " + e.message);
+    } finally { b.disabled = false; b.textContent = "🔔 알림 받기"; }
+  };
+
+  $("btnTest").onclick = async () => {
+    const b = $("btnTest"); b.disabled = true;
+    try {
+      const sub = await reg.pushManager.getSubscription();
+      if (!sub) return refresh();
+      const r = await call("test", { endpoint: sub.endpoint, title: C.APP_NAME });
+      toast(r.ok ? "테스트 알림을 보냈어요. 잠시 후 확인해보세요" : "전송 실패 — 다시 설정해주세요");
+    } catch (e) {
+      toast(e.message.includes("등록된 구독") ? "다시 설정이 필요해요" : "전송 실패: " + e.message);
+      if (e.message.includes("등록된 구독")) { const s = await reg.pushManager.getSubscription(); if (s) await s.unsubscribe(); refresh(); }
+    } finally { setTimeout(() => b.disabled = false, 3000); }
+  };
+
+  $("btnUnsub").onclick = async () => {
+    const b = $("btnUnsub");
+    if (b.dataset.confirm !== "1") { b.dataset.confirm = "1"; b.textContent = "한 번 더 누르면 알림이 꺼져요"; setTimeout(() => { b.dataset.confirm = ""; b.textContent = "알림 끄기"; }, 3000); return; }
+    try {
+      const sub = await reg.pushManager.getSubscription();
+      if (sub) { await call("unsubscribe", { endpoint: sub.endpoint }).catch(() => {}); await sub.unsubscribe(); }
+      toast("알림을 껐어요");
+    } catch (e) { toast("오류: " + e.message); }
+    b.dataset.confirm = ""; b.textContent = "알림 끄기";
+    refresh();
+  };
+
+  $("btnExternal").onclick = () => {
+    const url = location.href;
+    if (/KAKAOTALK/i.test(ua)) location.href = "kakaotalk://web/openExternal?url=" + encodeURIComponent(url);
+    else if (isAndroid) location.href = "intent://" + url.replace(/^https?:\/\//, "") + "#Intent;scheme=https;package=com.android.chrome;end";
+    else { navigator.clipboard?.writeText(url); toast("주소를 복사했어요. Safari에 붙여넣어 열어주세요"); }
+  };
+
+  // 안드로이드 설치 버튼
+  let deferred = null;
+  addEventListener("beforeinstallprompt", (e) => { e.preventDefault(); deferred = e; if (!isStandalone) $("vAndroidInstall").classList.remove("hide"); });
+  $("btnInstall").onclick = async () => { if (!deferred) return; deferred.prompt(); await deferred.userChoice; deferred = null; $("vAndroidInstall").classList.add("hide"); };
+
+  refresh().catch(e => { toast("초기화 오류: " + e.message); show("vUnsupported"); });
+})();
+</script>
+</body>
+</html>

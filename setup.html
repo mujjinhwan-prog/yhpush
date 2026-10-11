@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>VOY 알림 키 생성</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<style>
+  :root{--bg:#f4f6fa;--card:#fff;--line:#e3e8ef;--text:#14202e;--muted:#6b7a8c;--accent:#1f6fe5;--bad:#e5484d}
+  @media (prefers-color-scheme: dark){:root{--bg:#0e1622;--card:#162131;--line:#26354a;--text:#e8eef6;--muted:#8fa0b5;--accent:#4ea1ff}}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:Pretendard,-apple-system,sans-serif}
+  .wrap{max-width:720px;margin:0 auto;padding:32px 16px 60px}
+  h1{font-size:22px;margin:0 0 6px} p{color:var(--muted);line-height:1.6;font-size:14px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px;margin-top:16px}
+  .k{font-size:13px;font-weight:700;margin:14px 0 6px;display:flex;justify-content:space-between;align-items:center}
+  .k span{font-weight:400;color:var(--muted)}
+  code{display:block;font-family:ui-monospace,Menlo,monospace;font-size:13px;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px 12px;word-break:break-all}
+  .btn{font:inherit;font-size:15px;font-weight:700;border:0;border-radius:10px;padding:12px 18px;cursor:pointer;background:var(--accent);color:#fff}
+  .sm{font-size:12px;padding:5px 10px;border-radius:7px;background:transparent;border:1px solid var(--line);color:var(--text);cursor:pointer;font-family:inherit}
+  .warn{color:var(--bad);font-size:13px}
+  .hide{display:none}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>🔑 푸시 키 생성기</h1>
+  <p>VAPID 키와 관리자 키를 <b>이 브라우저 안에서만</b> 만듭니다. 서버로 전송되지 않습니다.<br>
+     한 번 만들어 등록하면 다시 만들 필요가 없습니다. (다시 만들면 기존 구독자가 모두 재구독해야 합니다)</p>
+  <button class="btn" id="gen">키 만들기</button>
+
+  <div class="card hide" id="out">
+    <div class="k">VAPID_PUBLIC_KEY <span>→ config.js + Supabase Secret</span> <button class="sm" data-c="pub">복사</button></div>
+    <code id="pub"></code>
+    <div class="k">VAPID_PRIVATE_KEY <span>→ Supabase Secret에만</span> <button class="sm" data-c="priv">복사</button></div>
+    <code id="priv"></code>
+    <div class="k">ADMIN_KEY <span>→ Supabase Secret + 관리자 로그인용</span> <button class="sm" data-c="adm">복사</button></div>
+    <code id="adm"></code>
+    <p class="warn">⚠️ 개인키(PRIVATE)와 관리자 키는 GitHub 등 공개된 곳에 올리지 마세요. 메모장에 따로 보관하세요.</p>
+  </div>
+</div>
+<script>
+const b64u = (buf) => btoa(String.fromCharCode(...new Uint8Array(buf))).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"");
+document.getElementById("gen").onclick = async () => {
+  const kp = await crypto.subtle.generateKey({ name: "ECDSA", namedCurve: "P-256" }, true, ["sign", "verify"]);
+  const raw = await crypto.subtle.exportKey("raw", kp.publicKey);
+  const jwk = await crypto.subtle.exportKey("jwk", kp.privateKey);
+  document.getElementById("pub").textContent = b64u(raw);
+  document.getElementById("priv").textContent = jwk.d;
+  document.getElementById("adm").textContent = b64u(crypto.getRandomValues(new Uint8Array(18)));
+  document.getElementById("out").classList.remove("hide");
+};
+document.querySelectorAll("[data-c]").forEach(b => b.onclick = async () => {
+  try { await navigator.clipboard.writeText(document.getElementById(b.dataset.c).textContent); b.textContent = "복사됨"; setTimeout(() => b.textContent = "복사", 1500); } catch {}
+});
+</script>
+</body>
+</html>

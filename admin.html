@@ -1,0 +1,367 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>VOY 알림 관리자</title>
+<link rel="icon" href="icons/icon-192.png">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<script src="config.js"></script>
+<style>
+  :root{--bg:#f4f6fa;--card:#fff;--line:#e3e8ef;--text:#14202e;--muted:#6b7a8c;--accent:#1f6fe5;--ok:#17a673;--bad:#e5484d;--soft:#eef3fb}
+  @media (prefers-color-scheme: dark){:root{--bg:#0e1622;--card:#162131;--line:#26354a;--text:#e8eef6;--muted:#8fa0b5;--accent:#4ea1ff;--soft:#1b2a3f}}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:Pretendard,-apple-system,"Apple SD Gothic Neo",sans-serif;-webkit-font-smoothing:antialiased}
+  header{display:flex;align-items:center;gap:12px;padding:16px 24px;border-bottom:1px solid var(--line);background:var(--card);position:sticky;top:0;z-index:5}
+  header img{width:34px;height:34px;border-radius:9px}
+  header h1{font-size:17px;margin:0;flex:1}
+  header .meta{font-size:13px;color:var(--muted)}
+  .wrap{max-width:1180px;margin:0 auto;padding:24px 16px 60px}
+  .grid{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,.9fr);gap:20px}
+  @media (max-width:900px){.grid{grid-template-columns:1fr}}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:22px}
+  .card h2{font-size:15px;margin:0 0 16px;display:flex;align-items:center;justify-content:space-between}
+  label{display:block;font-size:13px;font-weight:600;margin:0 0 6px}
+  label small{font-weight:400;color:var(--muted);margin-left:6px}
+  input,textarea,select{width:100%;font:inherit;font-size:15px;color:var(--text);background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:11px 13px;margin-bottom:16px;outline:none}
+  textarea{resize:vertical;min-height:84px;line-height:1.5}
+  input:focus,textarea:focus,select:focus{border-color:var(--accent)}
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  @media (max-width:520px){.two{grid-template-columns:1fr}}
+  .count{float:right;font-weight:400;color:var(--muted);font-size:12px}
+  .btn{font:inherit;font-size:15px;font-weight:700;border:0;border-radius:11px;padding:13px 18px;cursor:pointer;background:var(--accent);color:#fff}
+  .btn[disabled]{opacity:.5;pointer-events:none}
+  .btn.ghost{background:var(--soft);color:var(--text);font-weight:600}
+  .btn.sm{font-size:13px;padding:7px 11px;border-radius:8px}
+  .btn.warn{background:var(--bad)}
+  .actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  .result{font-size:14px;margin-top:14px;padding:12px 14px;border-radius:10px;background:var(--soft);display:none}
+  .result.show{display:block}
+
+  /* ---- 미리보기: iOS 잠금화면 ---- */
+  .phone{border-radius:34px;padding:58px 12px 26px;min-height:340px;position:relative;overflow:hidden;
+    background:linear-gradient(160deg,#5b6f8f 0%,#2c3a52 45%,#1a2233 100%)}
+  .phone .clock{text-align:center;color:#fff;font-size:58px;font-weight:300;letter-spacing:-1px;line-height:1;margin-bottom:4px}
+  .phone .date{text-align:center;color:rgba(255,255,255,.85);font-size:14px;margin-bottom:26px}
+  .grpTitle{display:flex;justify-content:space-between;align-items:center;color:#fff;font-size:17px;font-weight:600;padding:0 6px 8px;text-shadow:0 1px 4px rgba(0,0,0,.3)}
+  .grpTitle span{font-size:12px;font-weight:500;background:rgba(255,255,255,.22);padding:4px 10px;border-radius:999px}
+  .noti{display:flex;gap:10px;align-items:flex-start;background:rgba(40,40,46,.62);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border-radius:18px;padding:12px 13px;color:#fff}
+  .noti img{width:38px;height:38px;border-radius:9px;flex:0 0 38px;object-fit:cover;background:#fff}
+  .noti .t{display:flex;justify-content:space-between;gap:8px}
+  .noti .t b{font-size:14.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .noti .t i{font-style:normal;font-size:12.5px;color:rgba(255,255,255,.6);flex:0 0 auto}
+  .noti .b{font-size:14px;line-height:1.35;color:rgba(255,255,255,.92);display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden;white-space:pre-wrap;word-break:break-all}
+  .noti .c{flex:1;min-width:0}
+  .stack2{height:10px;margin:-4px 10px 0;border-radius:0 0 16px 16px;background:rgba(40,40,46,.4)}
+
+  /* ---- 미리보기: 안드로이드 ---- */
+  .andr{background:#1f1f22;border-radius:22px;padding:14px;color:#e8e8e8;margin-top:14px}
+  .andr .h{display:flex;align-items:center;gap:7px;font-size:12px;color:#bdbdbd;margin-bottom:8px}
+  .andr .h img{width:16px;height:16px;border-radius:50%}
+  .andr .row{display:flex;gap:12px}
+  .andr .row>div{flex:1;min-width:0}
+  .andr b{display:block;font-size:14.5px;margin-bottom:2px}
+  .andr p{margin:0;font-size:13.5px;color:#cfcfcf;line-height:1.4;white-space:pre-wrap;word-break:break-all}
+  .andr .ic{width:40px;height:40px;border-radius:8px;object-fit:cover}
+  .andr .big{width:100%;border-radius:12px;margin-top:10px;max-height:180px;object-fit:cover;display:none}
+  .hint{font-size:12px;color:var(--muted);line-height:1.6;margin:10px 2px 0}
+  .tabs{display:flex;gap:6px}
+  .tabs button{font:inherit;font-size:12px;border:1px solid var(--line);background:transparent;color:var(--muted);border-radius:999px;padding:4px 10px;cursor:pointer}
+  .tabs button.on{background:var(--accent);border-color:var(--accent);color:#fff}
+
+  /* ---- 통계 ---- */
+  .stats{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:6px}
+  .chip{background:var(--soft);border-radius:10px;padding:10px 14px;min-width:84px}
+  .chip b{display:block;font-size:20px}
+  .chip span{font-size:12px;color:var(--muted)}
+  table{width:100%;border-collapse:collapse;font-size:13.5px}
+  th,td{text-align:left;padding:10px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{font-size:12px;color:var(--muted);font-weight:600}
+  th.num{text-align:right}
+  td.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+  td .sub{color:var(--muted);font-size:12px;margin-top:2px;max-width:340px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .scroll{overflow-x:auto}
+
+  /* ---- 로그인 ---- */
+  .login{max-width:380px;margin:12vh auto;text-align:center}
+  .login img{width:64px;height:64px;border-radius:16px;margin-bottom:12px}
+  .login h1{font-size:20px;margin:0 0 20px}
+  .err{color:var(--bad);font-size:13px;min-height:18px}
+  .hide{display:none!important}
+</style>
+</head>
+<body>
+
+<!-- 로그인 -->
+<div class="login card hide" id="vLogin">
+  <img src="icons/icon-192.png" alt="">
+  <h1>알림 관리자</h1>
+  <input type="password" id="inKey" placeholder="관리자 키 (ADMIN_KEY)" autocomplete="current-password">
+  <div class="err" id="loginErr"></div>
+  <button class="btn" id="btnLogin" style="width:100%">들어가기</button>
+</div>
+
+<!-- 메인 -->
+<div id="vMain" class="hide">
+  <header>
+    <img src="icons/icon-192.png" alt="">
+    <h1 id="hdrName">VOY 알림 관리자</h1>
+    <span class="meta" id="hdrMeta"></span>
+    <button class="btn ghost sm" id="btnLogout">로그아웃</button>
+  </header>
+  <div class="wrap">
+    <div class="grid">
+      <!-- 작성 -->
+      <section class="card">
+        <h2>새 알림 보내기</h2>
+        <label for="fTitle">제목 <span class="count" id="cTitle">0/80</span></label>
+        <input id="fTitle" maxlength="80" placeholder="예: 📑 이번 주 영업 공지">
+        <label for="fBody">내용 <span class="count" id="cBody">0/300</span></label>
+        <textarea id="fBody" maxlength="300" placeholder="예: 10월 실적 리포트가 올라왔습니다. 눌러서 확인하세요!"></textarea>
+        <label for="fUrl">클릭 시 이동할 링크 <small>비워두면 앱 첫 화면</small></label>
+        <input id="fUrl" type="url" placeholder="https://notice.ourclinic.kr/...">
+        <div class="two">
+          <div>
+            <label for="fTarget">받는 대상</label>
+            <select id="fTarget"></select>
+          </div>
+          <div>
+            <label for="fIcon">아이콘 <small>안드로이드용</small></label>
+            <input id="fIcon" placeholder="icons/icon-192.png">
+          </div>
+        </div>
+        <label for="fImage">큰 이미지 URL <small>선택 · 안드로이드에서만 표시</small></label>
+        <input id="fImage" type="url" placeholder="https://.../banner.jpg">
+
+        <div class="actions">
+          <button class="btn" id="btnSend">보내기</button>
+          <button class="btn ghost" id="btnClear">초기화</button>
+          <span class="hint" id="sendHint" style="margin:0"></span>
+        </div>
+        <div class="result" id="result"></div>
+      </section>
+
+      <!-- 미리보기 -->
+      <section class="card">
+        <h2>미리보기
+          <span class="tabs"><button class="on" data-p="ios">iPhone</button><button data-p="and">Android</button></span>
+        </h2>
+        <div id="pIos">
+          <div class="phone">
+            <div class="clock" id="pClock">14:18</div>
+            <div class="date" id="pDate"></div>
+            <div class="grpTitle"><b id="pApp">VOY 알림</b><span>간략히 보기</span></div>
+            <div class="noti">
+              <img id="pIcon" src="icons/icon-192.png" alt="">
+              <div class="c">
+                <div class="t"><b id="pTitle">제목</b><i>지금</i></div>
+                <div class="b" id="pBody">내용</div>
+              </div>
+            </div>
+            <div class="stack2"></div>
+          </div>
+          <p class="hint">아이폰은 잠금화면에 <b>홈 화면 앱 아이콘</b>(icons/apple-touch-icon.png)이 표시되고, 위의 굵은 글씨가 <b>앱 이름</b>(manifest.json의 name)입니다.</p>
+        </div>
+        <div id="pAnd" class="hide">
+          <div class="andr">
+            <div class="h"><img src="icons/badge-72.png" alt="" style="background:#4ea1ff"><span id="pApp2">VOY 알림</span> · 지금</div>
+            <div class="row">
+              <div><b id="pTitle2">제목</b><p id="pBody2">내용</p></div>
+              <img class="ic" id="pIcon2" src="icons/icon-192.png" alt="">
+            </div>
+            <img class="big" id="pImage" alt="">
+          </div>
+          <p class="hint">안드로이드는 아이콘·큰 이미지를 알림마다 바꿀 수 있습니다. 상단 작은 아이콘은 icons/badge-72.png(흰색 실루엣)입니다.</p>
+        </div>
+      </section>
+    </div>
+
+    <!-- 현황 -->
+    <section class="card" style="margin-top:20px">
+      <h2>구독자 현황 <button class="btn ghost sm" id="btnReload">새로고침</button></h2>
+      <div class="stats" id="stats"></div>
+    </section>
+
+    <section class="card" style="margin-top:20px">
+      <h2>보낸 알림</h2>
+      <div class="scroll">
+        <table>
+          <thead><tr><th>보낸 시각</th><th>알림</th><th>대상</th><th class="num">성공</th><th class="num">실패</th><th class="num">클릭</th><th></th></tr></thead>
+          <tbody id="history"><tr><td colspan="7" class="hint">불러오는 중…</td></tr></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="card" style="margin-top:20px">
+      <h2>구독자 목록 <button class="btn ghost sm" id="btnSubs">불러오기</button></h2>
+      <div class="scroll">
+        <table>
+          <thead><tr><th>이름</th><th>소속</th><th>기기</th><th>등록일</th><th></th></tr></thead>
+          <tbody id="subs"><tr><td colspan="5" class="hint">"불러오기"를 누르면 표시됩니다.</td></tr></tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</div>
+
+<script>
+(() => {
+  const C = self.PUSH_CONFIG;
+  const FN = C.SUPABASE_URL + "/functions/v1/push";
+  const $ = (id) => document.getElementById(id);
+  const esc = (s) => String(s ?? "").replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
+  const store = {
+    get(k){ try{return sessionStorage.getItem(k)||localStorage.getItem(k)||""}catch{return ""} },
+    set(k,v){ try{localStorage.setItem(k,v)}catch{} },
+    del(k){ try{localStorage.removeItem(k);sessionStorage.removeItem(k)}catch{} },
+  };
+  let KEY = store.get("voy_push_admin");
+
+  document.title = C.APP_NAME + " 관리자";
+  $("hdrName").textContent = C.APP_NAME + " 관리자";
+  $("pApp").textContent = $("pApp2").textContent = C.APP_NAME;
+  $("fIcon").value = C.DEFAULT_ICON || "icons/icon-192.png";
+
+  async function call(action, data = {}) {
+    const r = await fetch(FN, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", apikey: C.SUPABASE_ANON_KEY, Authorization: "Bearer " + C.SUPABASE_ANON_KEY, "x-admin-key": KEY },
+      body: JSON.stringify({ action, ...data }),
+    });
+    const j = await r.json().catch(() => ({}));
+    if (r.status === 401) { logout(); throw new Error(j.error || "인증 실패"); }
+    if (!r.ok) throw new Error(j.error || ("오류 " + r.status));
+    return j;
+  }
+
+  // ---------- 로그인 ----------
+  async function tryLogin() {
+    $("loginErr").textContent = "";
+    try {
+      await loadStats();
+      $("vLogin").classList.add("hide"); $("vMain").classList.remove("hide");
+    } catch (e) {
+      $("vLogin").classList.remove("hide"); $("vMain").classList.add("hide");
+      if (KEY) $("loginErr").textContent = e.message;
+    }
+  }
+  function logout() { KEY = ""; store.del("voy_push_admin"); $("vMain").classList.add("hide"); $("vLogin").classList.remove("hide"); }
+  $("btnLogin").onclick = () => { KEY = $("inKey").value.trim(); if (!KEY) return; store.set("voy_push_admin", KEY); tryLogin(); };
+  $("inKey").onkeydown = (e) => { if (e.key === "Enter") $("btnLogin").click(); };
+  $("btnLogout").onclick = logout;
+
+  // ---------- 통계 / 기록 ----------
+  async function loadStats() {
+    const s = await call("stats");
+    $("hdrMeta").textContent = "구독자 " + s.total + "명";
+    const chips = [`<div class="chip"><b>${s.total}</b><span>전체</span></div>`]
+      .concat(Object.entries(s.groups).sort().map(([g, n]) => `<div class="chip"><b>${n}</b><span>${esc(g)}</span></div>`));
+    $("stats").innerHTML = chips.join("");
+
+    const opts = ["전체", ...(C.GROUPS || [])];
+    const cur = $("fTarget").value || "전체";
+    $("fTarget").innerHTML = opts.map(g => {
+      const n = g === "전체" ? s.total : (s.groups[g] || 0);
+      return `<option value="${esc(g)}">${esc(g)} (${n}명)</option>`;
+    }).join("");
+    $("fTarget").value = cur;
+    updateHint();
+
+    $("history").innerHTML = s.messages.length ? s.messages.map(m => `
+      <tr>
+        <td>${new Date(m.created_at).toLocaleString("ko-KR", { month:"numeric", day:"numeric", hour:"2-digit", minute:"2-digit" })}</td>
+        <td><b>${esc(m.title)}</b><div class="sub">${esc(m.body)}</div>${m.url ? `<div class="sub"><a href="${esc(m.url)}" target="_blank" rel="noopener">${esc(m.url)}</a></div>` : ""}</td>
+        <td>${esc(m.target)}</td>
+        <td class="num">${m.sent}</td><td class="num">${m.failed}</td><td class="num">${m.clicks}</td>
+        <td><button class="btn ghost sm" data-re="${m.id}">다시 쓰기</button></td>
+      </tr>`).join("") : `<tr><td colspan="7" class="hint">아직 보낸 알림이 없습니다.</td></tr>`;
+    $("history").querySelectorAll("[data-re]").forEach(b => b.onclick = () => {
+      const m = s.messages.find(x => String(x.id) === b.dataset.re);
+      $("fTitle").value = m.title || ""; $("fBody").value = m.body || ""; $("fUrl").value = m.url || "";
+      $("fIcon").value = m.icon || C.DEFAULT_ICON; $("fImage").value = m.image || "";
+      if ([...$("fTarget").options].some(o => o.value === m.target)) $("fTarget").value = m.target;
+      preview(); scrollTo({ top: 0, behavior: "smooth" });
+    });
+    return s;
+  }
+  $("btnReload").onclick = () => loadStats().catch(e => alertBox(e.message, true));
+
+  $("btnSubs").onclick = async () => {
+    try {
+      const { subscribers } = await call("subscribers");
+      $("subs").innerHTML = subscribers.length ? subscribers.map(s => `
+        <tr><td>${esc(s.name || "—")}</td><td>${esc(s.grp || "미지정")}</td>
+        <td><div class="sub">${esc(device(s.user_agent))}</div></td>
+        <td>${new Date(s.created_at).toLocaleDateString("ko-KR")}</td>
+        <td><button class="btn ghost sm" data-del="${s.id}">삭제</button></td></tr>`).join("")
+        : `<tr><td colspan="5" class="hint">구독자가 없습니다.</td></tr>`;
+      $("subs").querySelectorAll("[data-del]").forEach(b => b.onclick = async () => {
+        if (b.dataset.c !== "1") { b.dataset.c = "1"; b.textContent = "확인"; b.classList.add("warn"); return; }
+        await call("remove_subscriber", { id: Number(b.dataset.del) });
+        b.closest("tr").remove(); loadStats();
+      });
+    } catch (e) { alertBox(e.message, true); }
+  };
+  function device(ua = "") {
+    if (/iPhone/.test(ua)) return "iPhone"; if (/iPad/.test(ua)) return "iPad";
+    if (/Android/.test(ua)) return "Android" + (/SM-|Samsung/i.test(ua) ? " (Samsung)" : "");
+    if (/Windows/.test(ua)) return "Windows PC"; if (/Mac/.test(ua)) return "Mac"; return ua.slice(0, 40);
+  }
+
+  // ---------- 미리보기 ----------
+  function resolveIcon(v) { return v || C.DEFAULT_ICON || "icons/icon-192.png"; }
+  function preview() {
+    const t = $("fTitle").value, b = $("fBody").value;
+    $("cTitle").textContent = t.length + "/80"; $("cBody").textContent = b.length + "/300";
+    $("pTitle").textContent = $("pTitle2").textContent = t || "제목을 입력하세요";
+    $("pBody").textContent = $("pBody2").textContent = b || "내용을 입력하세요";
+    $("pIcon2").src = resolveIcon($("fIcon").value.trim());
+    const img = $("fImage").value.trim();
+    $("pImage").style.display = img ? "block" : "none"; if (img) $("pImage").src = img;
+  }
+  ["fTitle","fBody","fIcon","fImage"].forEach(id => $(id).addEventListener("input", preview));
+  $("pIcon").src = "icons/apple-touch-icon.png";
+  $("pIcon").onerror = () => { $("pIcon").onerror = null; $("pIcon").src = "icons/icon-192.png"; };
+  document.querySelectorAll(".tabs button").forEach(b => b.onclick = () => {
+    document.querySelectorAll(".tabs button").forEach(x => x.classList.toggle("on", x === b));
+    $("pIos").classList.toggle("hide", b.dataset.p !== "ios"); $("pAnd").classList.toggle("hide", b.dataset.p !== "and");
+  });
+  const tick = () => { const d = new Date();
+    $("pClock").textContent = d.toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit", hour12: false });
+    $("pDate").textContent = d.toLocaleDateString("ko-KR", { month: "long", day: "numeric", weekday: "long" }); };
+  tick(); setInterval(tick, 30000);
+  preview();
+
+  // ---------- 발송 ----------
+  function updateHint() { const o = $("fTarget").selectedOptions[0]; $("sendHint").textContent = o ? o.textContent + "에게 발송" : ""; }
+  $("fTarget").onchange = updateHint;
+  function alertBox(msg, bad) { const r = $("result"); r.innerHTML = msg; r.style.color = bad ? "var(--bad)" : ""; r.classList.add("show"); }
+
+  $("btnSend").onclick = async () => {
+    const b = $("btnSend");
+    const title = $("fTitle").value.trim();
+    if (!title) { alertBox("제목을 입력하세요.", true); $("fTitle").focus(); return; }
+    const url = $("fUrl").value.trim();
+    if (url && !/^https?:\/\//i.test(url)) { alertBox("링크는 https:// 로 시작해야 합니다.", true); $("fUrl").focus(); return; }
+    if (b.dataset.c !== "1") { b.dataset.c = "1"; b.textContent = "정말 보낼까요? 한 번 더 클릭"; b.classList.add("warn");
+      setTimeout(() => { b.dataset.c = ""; b.textContent = "보내기"; b.classList.remove("warn"); }, 4000); return; }
+    b.dataset.c = ""; b.classList.remove("warn"); b.disabled = true; b.textContent = "보내는 중…";
+    try {
+      let icon = $("fIcon").value.trim();
+      if (icon && !/^https?:\/\//i.test(icon)) icon = new URL(icon, location.href).href;
+      const r = await call("send", {
+        title, body: $("fBody").value.trim(), url, icon, image: $("fImage").value.trim(), target: $("fTarget").value,
+      });
+      alertBox(`✅ 발송 완료 — 대상 ${r.total}명 · 성공 <b>${r.sent}</b> · 실패 ${r.failed}` + (r.removed ? ` (만료된 구독 ${r.removed}건 자동 정리)` : ""));
+      loadStats();
+    } catch (e) { alertBox("발송 실패: " + esc(e.message), true); }
+    finally { b.disabled = false; b.textContent = "보내기"; }
+  };
+  $("btnClear").onclick = () => { ["fTitle","fBody","fUrl","fImage"].forEach(id => $(id).value = ""); $("fIcon").value = C.DEFAULT_ICON; $("result").classList.remove("show"); preview(); };
+
+  KEY ? tryLogin() : $("vLogin").classList.remove("hide");
+})();
+</script>
+</body>
+</html>
